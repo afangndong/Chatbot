@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #chatbox {
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .user-message {
+            text-align: right;
+            color: blue;
+        }
+        .bot-message {
+            text-align: left;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Chat with ZLK Chatbot</h2>
+        <div id="chatbox" class="mb-3"></div>
+        <input type="text" id="user_input" class="form-control" placeholder="Type your message...">
+        <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+function sendMessage() {
+    var userInput = $('#user_input').val();
+    $('#chatbox').append('<div class="user-message"><strong>You:</strong> ' + userInput + '</div>');
+    
+    $.get("/get", {msg: userInput}).done(function(data) {
+        $('#chatbox').append('<div class="bot-message"><strong>Bot:</strong> ' + data.response + '</div>');
+        
+        // Check if we need to ask for correction
+        if (data.ask_for_correction) {
+            var correctResponse = prompt("I don't know the answer to that. What should I say?");
+            if (correctResponse) {
+                // Send the new question and correct response to update the bot
+                $.post("/update", JSON.stringify({question: userInput, response: correctResponse}), function(updateResponse) {
+                    $('#chatbox').append('<div class="bot-message"><strong>Bot:</strong> ' + updateResponse.message + '</div>');
+                }, 'json');
+            }
+        }
+        
+        $('#chatbox').scrollTop($('#chatbox')[0].scrollHeight);
+    });
+    
+    $('#user_input').val('');
+}
+  
+    </script>
+</body>
+</html>
